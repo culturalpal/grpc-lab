@@ -6,7 +6,6 @@ import (
 	"google.golang.org/grpc/balancer/base"
 	"google.golang.org/grpc/grpclog"
 	"google.golang.org/grpc/resolver"
-	"math/rand"
 	"sync"
 )
 
@@ -18,7 +17,7 @@ type attributeKey struct{}
 
 // AddrInfo will be stored inside Address metadata in order to use weighted balancer.
 type AddrInfo struct {
-	Weight int
+	accountId string
 }
 
 // SetAddrInfo returns a copy of addr in which the Attributes field is updated
@@ -39,46 +38,38 @@ func GetAddrInfo(addr resolver.Address) AddrInfo {
 type zkPickerBuilder struct{}
 
 func (zpb *zkPickerBuilder) Build(info base.PickerBuildInfo) balancer.Picker {
-	grpclog.Infof("weightPicker: newPicker called with info: %v", info)
+	grpclog.Infof("zkPicker: newPicker called with info: %v", info)
 	if len(info.ReadySCs) == 0 {
 		return base.NewErrPicker(balancer.ErrNoSubConnAvailable)
 	}
-	var scs []balancer.SubConn
+	scsMap := make(map[string]balancer.SubConn)
 	for subConn, addr := range info.ReadySCs {
-		node := GetAddrInfo(addr.Address)
-		if node.Weight <= 0 {
-			node.Weight = minWeight
-		} else if node.Weight > 5 {
-			node.Weight = maxWeight
-		}
-		for i := 0; i < node.Weight; i++ {
-			scs = append(scs, subConn)
-		}
+		info := GetAddrInfo(addr.Address)
+		scsMap[info.accountId] = subConn
 	}
 	return &zkPicker{
-		subConns: scs,
+		subConns: scsMap,
 	}
 }
 
 // NewBuilder creates a new weight balancer builder.
-func newBuilder() balancer.Builder {
+func NewBuilder() balancer.Builder {
 	return base.NewBalancerBuilder(Name, &zkPickerBuilder{}, base.Config{HealthCheck: false})
 }
-
 
 type zkPicker struct {
 	// subConns is the snapshot of the roundrobin balancer when this picker was
 	// created. The slice is immutable. Each Get() will do a round robin
 	// selection from it and return the selected SubConn.
-	subConns []balancer.SubConn
+	subConns map[string]balancer.SubConn
 
 	mu sync.Mutex
 }
 
 func (p *zkPicker) Pick(info balancer.PickInfo) (balancer.PickResult, error) {
 	p.mu.Lock()
-	index := rand.Intn(len(p.subConns))
-	sc := p.subConns[index]
+	accountId := info.Ctx.Value("accountId").(string)
+	sc := p.subConns[accountId]
 	p.mu.Unlock()
 	return balancer.PickResult{SubConn: sc}, nil
 }

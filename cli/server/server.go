@@ -7,6 +7,7 @@ import (
 	pb "github.com/ppal31/gochat/api"
 	"google.golang.org/grpc"
 	"gopkg.in/alecthomas/kingpin.v2"
+	"io"
 	"log"
 	"net"
 	"strconv"
@@ -55,8 +56,7 @@ func registerWithZk(zkAddrs []string, serverIp string, port int) error {
 
 	//Root path exists or created hence update the child
 	sp := rootPath + "/" + serverIp + ":" + strconv.Itoa(port)
-	ep := time.Now().UnixMilli()
-	_, err = zkc.Create(sp, []byte(strconv.Itoa(int(ep))), zk.FlagEphemeral, zk.WorldACL(zk.PermAll))
+	_, err = zkc.Create(sp, []byte(strconv.Itoa(port)), zk.FlagEphemeral, zk.WorldACL(zk.PermAll))
 	if err != nil {
 		return err
 	}
@@ -64,6 +64,17 @@ func registerWithZk(zkAddrs []string, serverIp string, port int) error {
 }
 
 func (s *Server) Chat(stream pb.ChatService_ChatServer) error {
+	for {
+		cm, err := stream.Recv()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return err
+		}
+		log.Printf("Message Received %s\n", cm.Message)
+		stream.Send(&pb.ChatMessage{Message: fmt.Sprintf("%s Acked from %d", cm.Message, s.port)})
+	}
 	return nil
 }
 
