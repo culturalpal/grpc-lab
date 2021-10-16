@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/go-zookeeper/zk"
+	"github.com/ppal31/grpc-lab/cli/lb"
 	pb "github.com/ppal31/grpc-lab/contracts/chat"
 	"google.golang.org/grpc"
 	"gopkg.in/alecthomas/kingpin.v2"
@@ -13,8 +14,6 @@ import (
 	"strconv"
 	"time"
 )
-
-const rootPath = "/chat_servers_golang"
 
 type Server struct {
 	zkAddrs []string
@@ -42,20 +41,20 @@ func registerWithZk(zkAddrs []string, serverIp string, port int) error {
 		return err
 	}
 
-	exists, _, err := zkc.Exists(rootPath)
+	exists, _, err := zkc.Exists(lb.RootPath)
 	if err != nil {
 		return err
 	}
 
 	if !exists {
-		_, err := zkc.Create(rootPath, nil, 0, zk.WorldACL(zk.PermAll))
+		_, err := zkc.Create(lb.RootPath, nil, 0, zk.WorldACL(zk.PermAll))
 		if err != nil {
 			return err
 		}
 	}
 
 	//Root path exists or created hence update the child
-	sp := rootPath + "/" + serverIp + ":" + strconv.Itoa(port)
+	sp := lb.RootPath + "/" + serverIp + ":" + strconv.Itoa(port)
 	_, err = zkc.Create(sp, []byte(strconv.Itoa(port)), zk.FlagEphemeral, zk.WorldACL(zk.PermAll))
 	if err != nil {
 		return err
@@ -89,7 +88,7 @@ type Command struct {
 
 func Register(app *kingpin.Application) {
 	c := new(Command)
-	cmd := app.Command("server", "Starts a chat server").Action(c.run)
+	cmd := app.Command("lbserver", "Starts a chat server").Action(c.run)
 	cmd.Flag("port", "Port on which the server should run").Required().IntVar(&c.port)
 	cmd.Flag("zkAddrs", "Address of zookeeper server").Required().StringsVar(&c.zkAddrs)
 }

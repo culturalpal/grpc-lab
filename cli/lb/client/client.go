@@ -3,18 +3,19 @@ package client
 import (
 	"context"
 	"fmt"
-	gb "github.com/ppal31/grpc-lab/cli/client/balancer"
+	lbb "github.com/ppal31/grpc-lab/cli/lb/client/balancer"
 	pb "github.com/ppal31/grpc-lab/contracts/chat"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/balancer"
 	"google.golang.org/grpc/resolver"
 	"io"
 	"log"
-	"time"
+	"math/rand"
 )
 
 type Client struct {
-	zkAddrs []string // Address of server to connect to
+	accountIds []string
+	zkAddrs    []string // Address of server to connect to
 }
 
 func (c *Client) Ping() error {
@@ -25,17 +26,13 @@ func (c *Client) Ping() error {
 	defer closer.Close()
 
 	for i := 0; i < 1000; i++ {
-		accountId := "5001"
-		if i%2 == 0 {
-			accountId = "5002"
-		}
+		accountId := c.accountIds[rand.Intn(len(c.accountIds))]
 		ctx := context.WithValue(context.Background(), "accountId", accountId)
 		r, err := cc.Ping(ctx, &pb.PingRequest{Message: "PING"})
 		if err != nil {
 			return err
 		}
 		log.Printf("Reply : %s", r.GetMessage())
-		time.Sleep(time.Second)
 	}
 	return nil
 }
@@ -80,13 +77,13 @@ func (c *Client) Chat(accountId string) error {
 }
 
 func (c *Client) setupClient() (pb.ChatServiceClient, io.Closer, error) {
-	balancer.Register(gb.NewBuilder())
-	rb, err := gb.NewZkBuilder(c.zkAddrs)
+	balancer.Register(lbb.NewBuilder())
+	rb, err := lbb.NewZkBuilder(c.zkAddrs)
 	if err != nil {
 		return nil, nil, err
 	}
 	resolver.Register(rb)
-	conn, err := grpc.Dial(fmt.Sprintf("%s:///", rb.Scheme()), grpc.WithInsecure(), grpc.WithBalancerName(gb.Name))
+	conn, err := grpc.Dial(fmt.Sprintf("%s:///", rb.Scheme()), grpc.WithInsecure(), grpc.WithBalancerName(lbb.Name))
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}
@@ -95,6 +92,6 @@ func (c *Client) setupClient() (pb.ChatServiceClient, io.Closer, error) {
 	return cc, conn, nil
 }
 
-func NewClient(zkAddrs []string) *Client {
-	return &Client{zkAddrs: zkAddrs}
+func NewClient(zkAddrs, accountIds []string) *Client {
+	return &Client{zkAddrs: zkAddrs, accountIds: accountIds}
 }

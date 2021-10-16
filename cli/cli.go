@@ -1,7 +1,7 @@
 package cli
 
 import (
-	"github.com/ppal31/grpc-lab/cli/server"
+	lb "github.com/ppal31/grpc-lab/cli/lb/server"
 	"gopkg.in/alecthomas/kingpin.v2"
 	"os"
 )
@@ -11,6 +11,6 @@ var description = "Chat Application description. Must some explaining text shoul
 
 func Command() {
 	app := kingpin.New(application, description)
-	server.Register(app)
+	lb.Register(app)
 	kingpin.MustParse(app.Parse(os.Args[1:]))
 }

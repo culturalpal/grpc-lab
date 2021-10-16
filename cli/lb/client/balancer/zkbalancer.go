@@ -1,12 +1,14 @@
 package balancer
 
 import (
+	"errors"
 	"google.golang.org/grpc/attributes"
 	"google.golang.org/grpc/balancer"
 	"google.golang.org/grpc/balancer/base"
 	"google.golang.org/grpc/grpclog"
 	"google.golang.org/grpc/resolver"
 	"sync"
+	"time"
 )
 
 const Name = "account"
@@ -67,9 +69,17 @@ type zkPicker struct {
 }
 
 func (p *zkPicker) Pick(info balancer.PickInfo) (balancer.PickResult, error) {
-	p.mu.Lock()
 	accountId := info.Ctx.Value("accountId").(string)
-	sc := p.subConns[accountId]
-	p.mu.Unlock()
-	return balancer.PickResult{SubConn: sc}, nil
+	for i := 0; i < 3; i++ {
+		p.mu.Lock()
+		sc, ok := p.subConns[accountId]
+		p.mu.Unlock()
+		if ok {
+			return balancer.PickResult{SubConn: sc}, nil
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+
+	return balancer.PickResult{}, errors.New("server not available for account" + accountId)
+
 }

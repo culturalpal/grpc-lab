@@ -2,6 +2,7 @@ package balancer
 
 import (
 	"github.com/go-zookeeper/zk"
+	"github.com/ppal31/grpc-lab/cli/lb"
 	"google.golang.org/grpc/resolver"
 	"log"
 	"sync"
@@ -9,8 +10,7 @@ import (
 )
 
 const (
-	scheme   = "zk"
-	rootPath = "/chat_servers_golang"
+	scheme = "zk"
 )
 
 type ZkResolver struct {
@@ -41,7 +41,7 @@ func (r *ZkResolver) Scheme() string {
 }
 
 func (r *ZkResolver) start() error {
-	children, _, ch, err := r.zkc.ChildrenW(rootPath)
+	children, _, ch, err := r.zkc.ChildrenW(lb.RootPath)
 	if err != nil {
 		return err
 	}
@@ -52,7 +52,7 @@ func (r *ZkResolver) start() error {
 
 func (r *ZkResolver) updateServers(children []string) {
 	for _, srv := range children {
-		accountId, _, _ := r.zkc.Get(rootPath + "/" + srv)
+		accountId, _, _ := r.zkc.Get(lb.RootPath + "/" + srv)
 		r.setServerList(srv, string(accountId))
 	}
 }
@@ -85,7 +85,7 @@ func (r *ZkResolver) updater(ch <-chan zk.Event) {
 		ev := <-ch
 		if ev.Type == zk.EventNodeChildrenChanged {
 			log.Printf("EventNodeChildrenChanged received updating servers")
-			children, _, _ := r.zkc.Children(rootPath)
+			children, _, _ := r.zkc.Children(lb.RootPath)
 			r.updateServers(children)
 		} else {
 			//log.Printf("Ignoring event of the type %d", ev.Type)
