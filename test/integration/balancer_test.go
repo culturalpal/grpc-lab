@@ -1,7 +1,7 @@
 package integration
 
 import (
-	"github.com/ppal31/gochat/cli/client"
+	"github.com/ppal31/grpc-lab/cli/client"
 	"testing"
 )
 

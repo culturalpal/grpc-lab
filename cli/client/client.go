@@ -3,8 +3,8 @@ package client
 import (
 	"context"
 	"fmt"
-	pb "github.com/ppal31/gochat/api"
-	gb "github.com/ppal31/gochat/cli/client/balancer"
+	gb "github.com/ppal31/grpc-lab/cli/client/balancer"
+	pb "github.com/ppal31/grpc-lab/contracts/chat"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/balancer"
 	"google.golang.org/grpc/resolver"

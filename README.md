@@ -1,4 +1,4 @@
-# gochat
+# grpc-lab
 
 This repository implemented a rpc server and client in go.
 

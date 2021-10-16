@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/go-zookeeper/zk"
-	pb "github.com/ppal31/gochat/api"
+	pb "github.com/ppal31/grpc-lab/contracts/chat"
 	"google.golang.org/grpc"
 	"gopkg.in/alecthomas/kingpin.v2"
 	"io"
