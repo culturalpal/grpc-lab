@@ -1,4 +1,4 @@
-module github.com/ppal31/gochat
+module github.com/ppal31/grpc-lab
 
 go 1.17
 

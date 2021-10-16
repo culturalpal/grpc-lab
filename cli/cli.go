@@ -1,7 +1,7 @@
 package cli
 
 import (
-	"github.com/ppal31/gochat/cli/server"
+	"github.com/ppal31/grpc-lab/cli/server"
 	"gopkg.in/alecthomas/kingpin.v2"
 	"os"
 )
