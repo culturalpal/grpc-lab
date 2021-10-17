@@ -18,7 +18,7 @@ import (
 )
 
 type Server struct {
-	port int
+	port       int
 	clientPort int
 
 	mu    sync.RWMutex
@@ -118,7 +118,7 @@ func (s *Server) Start() error {
 }
 
 type Command struct {
-	port int
+	port       int
 	clientPort int
 }
 
