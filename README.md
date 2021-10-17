@@ -29,4 +29,6 @@ It contain two tests
 - [ ] Better error handling for zookeeper
 - [ ] Add more examples using etcd/consul etc
 
+### Implement a chat server
+
 
