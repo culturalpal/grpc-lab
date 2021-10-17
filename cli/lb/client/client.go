@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	lbb "github.com/ppal31/grpc-lab/cli/lb/client/balancer"
-	pb "github.com/ppal31/grpc-lab/contracts/chat"
+	pb "github.com/ppal31/grpc-lab/generated/contracts/chat"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/balancer"
 	"google.golang.org/grpc/resolver"
