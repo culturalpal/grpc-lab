@@ -1,3 +1,3 @@
 [submodule "contracts"]
 	path = contracts
-	url = git@github.com:ppal31/grpc-lab-contracts.git
+	url = git@github.com-personal:ppal31/grpc-lab-contracts.git
