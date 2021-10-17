@@ -17,3 +17,5 @@
 # vendor/
 .idea/
 grpc-lab
+#generated/
+vendor
