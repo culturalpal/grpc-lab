@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/go-zookeeper/zk"
 	"github.com/ppal31/grpc-lab/cli/lb"
@@ -65,7 +66,7 @@ func registerWithZk(zkAddrs []string, serverIp string, port int) error {
 func (s *Server) Chat(stream pb.ChatService_ChatServer) error {
 	for {
 		cm, err := stream.Recv()
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			break
 		}
 		if err != nil {
