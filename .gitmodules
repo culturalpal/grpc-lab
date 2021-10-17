@@ -1,3 +1,4 @@
 [submodule "contracts"]
+    branch = master
 	path = contracts
 	url = git@github.com-personal:ppal31/grpc-lab-contracts.git
