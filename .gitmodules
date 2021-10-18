@@ -1,4 +1,4 @@
 [submodule "api/remote"]
 	path = api/remote
-	url = git@github.com-personal:ppal31/grpc-lab-contracts.git
+	url = git@github.com:prashantpal31/grpc-lab-contracts.git
 	branch = master
