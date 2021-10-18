@@ -1,6 +1,6 @@
 # grpc-lab
 
-This repository contains various experiment related to grpc in golang. The setup per experiment is described in the setup section below 
+This repository contains various experiment related to grpc in golang. The setup per experiment is described in the experiments section below 
 
 The `contracts` directory contain a submodule which points to the [grpc-lab-contracts](https://www.google.com) repo
 
@@ -10,7 +10,7 @@ You need to have the following protobuf tools in your path before you generate g
 
 Protoc Gen for go
 
-`google.golang.org/protobuf/cmd/protoc-gen-go@latest`
+`go install google.golang.org/protobuf/cmd/protoc-gen-go@latest`
 
 Protoc Gen for go-grpc
 
@@ -18,14 +18,14 @@ Protoc Gen for go-grpc
 
 Grpc Gateway tools
 
-`go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway`
+`go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@latest`
 
 `go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@latest`
 
 
 The generated files are contained in the generated directory. To regenerate the proto definitions use the following command
 `buf generate`
-## Setup
+## Experiments
 
 ### Client Side Load Balancing experiment
 The repo contains a launcher script at the root ``start.sh``
