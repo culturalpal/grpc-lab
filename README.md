@@ -4,9 +4,27 @@ This repository contains various experiment related to grpc in golang. The setup
 
 The `contracts` directory contain a submodule which points to the [grpc-lab-contracts](https://www.google.com) repo
 
-The generated files are contained in the generated directory. To regenerate the proto definitions use the following command
+The repo uses buf to generate the definitions. The contracts repo contains the buf modules. The generate and work files are contined in this repo
 
-`protoc --go_out=./generated --go_opt=paths=source_relative  --go-grpc_out=./generated --go-grpc_opt=paths=source_relative <path/to/proto/in/contracts>`
+You need to have the following protobuf tools in your path before you generate go structs from proto definitions
+
+Protoc Gen for go
+
+`google.golang.org/protobuf/cmd/protoc-gen-go@latest`
+
+Protoc Gen for go-grpc
+
+`go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest`
+
+Grpc Gateway tools
+
+`go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway`
+
+`go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@latest`
+
+
+The generated files are contained in the generated directory. To regenerate the proto definitions use the following command
+`buf generate`
 ## Setup
 
 ### Client Side Load Balancing experiment
@@ -29,6 +47,23 @@ It contain two tests
 - [ ] Better error handling for zookeeper
 - [ ] Add more examples using etcd/consul etc
 
-### Implement a chat server
+### Book Service
+Implemented a book service which is a basic in memory CRUD application. 
+The primary thing is this book servce get exposes as an http service using `grpc-gateway` transcoding
+
+To run this service you need to you need to build the repo using
+
+`go build -o lab`
+
+Once build you can run the bookstore example using 
+
+`./lab bookstore --port=<port_of_grpc_server> --clientPort=<port_for_grpc_gateway_reverse_proxy>`
+
+Once running you it exposes following http endpoints
+
+- GET `/api/v1/books` - List of Books
+- GET `/api/v1/books/{id}` - Get a book
+- DELETE `/api/v1/books/{id}"` - Delete a book
+- POST `/api/v1/books` - Create a book Payload - `'{"title":"Designing Data Intensive Applications", "author":"Michael Kleppman"}'`
 
 
