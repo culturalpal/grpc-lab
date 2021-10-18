@@ -1,0 +1,4 @@
+version: v1
+directories:
+  - api/remote/bookapi
+  - api/remote/chatapi

@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	lbb "github.com/ppal31/grpc-lab/cli/lb/client/balancer"
-	pb "github.com/ppal31/grpc-lab/generated/chat"
+	chatv1 "github.com/ppal31/grpc-lab/generated/chat/v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/balancer"
 	"google.golang.org/grpc/resolver"
@@ -28,7 +28,7 @@ func (c *Client) Ping() error {
 	for i := 0; i < 1000; i++ {
 		accountId := c.accountIds[rand.Intn(len(c.accountIds))]
 		ctx := context.WithValue(context.Background(), "accountId", accountId)
-		r, err := cc.Ping(ctx, &pb.PingRequest{Message: "PING"})
+		r, err := cc.Ping(ctx, &chatv1.PingRequest{Message: "PING"})
 		if err != nil {
 			return err
 		}
@@ -66,7 +66,7 @@ func (c *Client) Chat(accountId string) error {
 	}()
 
 	for i := 0; i < 100; i++ {
-		err := cs.Send(&pb.ChatMessage{Message: fmt.Sprintf("Message %d", i)})
+		err := cs.Send(&chatv1.ChatMessage{Message: fmt.Sprintf("Message %d", i)})
 		if err != nil {
 			return err
 		}
@@ -76,7 +76,7 @@ func (c *Client) Chat(accountId string) error {
 	return nil
 }
 
-func (c *Client) setupClient() (pb.ChatServiceClient, io.Closer, error) {
+func (c *Client) setupClient() (chatv1.ChatServiceClient, io.Closer, error) {
 	balancer.Register(lbb.NewBuilder())
 	rb, err := lbb.NewZkBuilder(c.zkAddrs)
 	if err != nil {
@@ -88,7 +88,7 @@ func (c *Client) setupClient() (pb.ChatServiceClient, io.Closer, error) {
 		log.Fatalf("did not connect: %v", err)
 	}
 
-	cc := pb.NewChatServiceClient(conn)
+	cc := chatv1.NewChatServiceClient(conn)
 	return cc, conn, nil
 }
 

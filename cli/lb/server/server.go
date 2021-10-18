@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/go-zookeeper/zk"
 	"github.com/ppal31/grpc-lab/cli/lb"
-	pb "github.com/ppal31/grpc-lab/generated/chat"
+	pb "github.com/ppal31/grpc-lab/generated/chat/v1"
 	"google.golang.org/grpc"
 	"gopkg.in/alecthomas/kingpin.v2"
 	"io"

@@ -4,9 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-	v1 "github.com/ppal31/grpc-lab/generated/book"
+	bookv1 "github.com/ppal31/grpc-lab/generated/book/v1"
 	"google.golang.org/grpc"
 	"gopkg.in/alecthomas/kingpin.v2"
 	"log"
@@ -22,41 +21,41 @@ type Server struct {
 	clientPort int
 
 	mu    sync.RWMutex
-	books []*v1.Book
-	v1.UnimplementedBookStoreServer
+	books []*bookv1.Book
+	bookv1.UnimplementedBookServiceServer
 }
 
-func (s *Server) ListBooks(ctx context.Context, request *v1.ListBookRequest) (*v1.ListBookResponse, error) {
+func (s *Server) ListBooks(ctx context.Context, request *bookv1.ListBooksRequest) (*bookv1.ListBooksResponse, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	return &v1.ListBookResponse{Books: s.books}, nil
+	return &bookv1.ListBooksResponse{Books: s.books}, nil
 }
 
-func (s *Server) CreateBook(ctx context.Context, request *v1.CreateBookRequest) (*v1.Book, error) {
+func (s *Server) CreateBook(ctx context.Context, request *bookv1.CreateBookRequest) (*bookv1.CreateBookResponse, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	rand.Seed(time.Now().UnixMilli())
-	book := &v1.Book{
+	book := &bookv1.Book{
 		Id:     int64(rand.Intn(1000)),
 		Author: request.Author,
 		Title:  request.Title,
 	}
 	s.books = append(s.books, book)
-	return book, nil
+	return &bookv1.CreateBookResponse{Book: book}, nil
 }
 
-func (s *Server) GetBook(ctx context.Context, request *v1.GetBookRequest) (*v1.Book, error) {
+func (s *Server) GetBook(ctx context.Context, request *bookv1.GetBookRequest) (*bookv1.GetBookResponse, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	for _, book := range s.books {
 		if book.Id == request.GetId() {
-			return book, nil
+			return &bookv1.GetBookResponse{Book: book}, nil
 		}
 	}
 	return nil, errors.New("book not found")
 }
 
-func (s *Server) DeleteBook(ctx context.Context, request *v1.DeleteBookRequest) (*empty.Empty, error) {
+func (s *Server) DeleteBook(ctx context.Context, request *bookv1.DeleteBookRequest) (*bookv1.DeleteBookResponse, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	delIdx := -1
@@ -71,7 +70,7 @@ func (s *Server) DeleteBook(ctx context.Context, request *v1.DeleteBookRequest) 
 		return nil, errors.New("book not found")
 	}
 	s.books = append(s.books[:delIdx], s.books[delIdx+1:]...)
-	return nil, nil
+	return &bookv1.DeleteBookResponse{}, nil
 }
 
 func (s *Server) Start() error {
@@ -80,7 +79,7 @@ func (s *Server) Start() error {
 		log.Fatalf("failed to listen: %v", err)
 	}
 	gs := grpc.NewServer()
-	v1.RegisterBookStoreServer(gs, s)
+	bookv1.RegisterBookServiceServer(gs, s)
 	log.Printf("server listening at %v", lis.Addr())
 	go func() {
 		err := gs.Serve(lis)
@@ -103,7 +102,7 @@ func (s *Server) Start() error {
 
 	gwmux := runtime.NewServeMux()
 	// Register Greeter
-	err = v1.RegisterBookStoreHandler(context.Background(), gwmux, conn)
+	err = bookv1.RegisterBookServiceHandler(context.Background(), gwmux, conn)
 	if err != nil {
 		log.Fatalln("Failed to register gateway:", err)
 	}
@@ -130,6 +129,6 @@ func Register(app *kingpin.Application) {
 }
 
 func (c *Command) run(*kingpin.ParseContext) error {
-	s := &Server{port: c.port, clientPort: c.clientPort, books: make([]*v1.Book, 0)}
+	s := &Server{port: c.port, clientPort: c.clientPort, books: make([]*bookv1.Book, 0)}
 	return s.Start()
 }
