@@ -16,7 +16,7 @@ import (
 	"time"
 )
 
-type Server struct {
+type Server struct{
 	port       int
 	clientPort int
 

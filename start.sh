@@ -1,4 +1,4 @@
-rm -rf gochat
+rm -rf grpc-lab
 
 trap 'killall grpc-lab' SIGINT
 go install -v
