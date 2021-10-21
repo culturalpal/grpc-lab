@@ -6,71 +6,23 @@ import (
 	"fmt"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	bookv1 "github.com/ppal31/grpc-lab/generated/book/v1"
+	"github.com/ppal31/grpc-lab/internal/books"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/mongo/readpref"
 	"google.golang.org/grpc"
 	"gopkg.in/alecthomas/kingpin.v2"
 	"log"
-	"math/rand"
 	"net"
 	"net/http"
-	"sync"
 	"time"
 )
 
-type Server struct{
+type Server struct {
 	port       int
 	clientPort int
 
-	mu    sync.RWMutex
-	books []*bookv1.Book
-	bookv1.UnimplementedBookServiceServer
-}
-
-func (s *Server) ListBooks(ctx context.Context, request *bookv1.ListBooksRequest) (*bookv1.ListBooksResponse, error) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-	return &bookv1.ListBooksResponse{Books: s.books}, nil
-}
-
-func (s *Server) CreateBook(ctx context.Context, request *bookv1.CreateBookRequest) (*bookv1.CreateBookResponse, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	rand.Seed(time.Now().UnixMilli())
-	book := &bookv1.Book{
-		Id:     int64(rand.Intn(1000)),
-		Author: request.Author,
-		Title:  request.Title,
-	}
-	s.books = append(s.books, book)
-	return &bookv1.CreateBookResponse{Book: book}, nil
-}
-
-func (s *Server) GetBook(ctx context.Context, request *bookv1.GetBookRequest) (*bookv1.GetBookResponse, error) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-	for _, book := range s.books {
-		if book.Id == request.GetId() {
-			return &bookv1.GetBookResponse{Book: book}, nil
-		}
-	}
-	return nil, errors.New("book not found")
-}
-
-func (s *Server) DeleteBook(ctx context.Context, request *bookv1.DeleteBookRequest) (*bookv1.DeleteBookResponse, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	delIdx := -1
-	for idx, book := range s.books {
-		if book.Id == request.GetId() {
-			delIdx = idx
-			break
-		}
-	}
-
-	if delIdx < 0 {
-		return nil, errors.New("book not found")
-	}
-	s.books = append(s.books[:delIdx], s.books[delIdx+1:]...)
-	return &bookv1.DeleteBookResponse{}, nil
+	bs bookv1.BookServiceServer
 }
 
 func (s *Server) Start() error {
@@ -79,7 +31,7 @@ func (s *Server) Start() error {
 		log.Fatalf("failed to listen: %v", err)
 	}
 	gs := grpc.NewServer()
-	bookv1.RegisterBookServiceServer(gs, s)
+	bookv1.RegisterBookServiceServer(gs, s.bs)
 	log.Printf("server listening at %v", lis.Addr())
 	go func() {
 		err := gs.Serve(lis)
@@ -101,7 +53,6 @@ func (s *Server) Start() error {
 	}
 
 	gwmux := runtime.NewServeMux()
-	// Register Greeter
 	err = bookv1.RegisterBookServiceHandler(context.Background(), gwmux, conn)
 	if err != nil {
 		log.Fatalln("Failed to register gateway:", err)
@@ -119,6 +70,7 @@ func (s *Server) Start() error {
 type Command struct {
 	port       int
 	clientPort int
+	backend    string
 }
 
 func Register(app *kingpin.Application) {
@@ -126,9 +78,57 @@ func Register(app *kingpin.Application) {
 	cmd := app.Command("bookstore", "Starts a bookstore server").Action(c.run)
 	cmd.Flag("port", "Port on which the server should run").Required().IntVar(&c.port)
 	cmd.Flag("clientPort", "This is where the gRPC-Gateway proxies the requests").Required().IntVar(&c.clientPort)
+	cmd.Flag("backend", "The storage backend to use. The options currently are inmemory and mongo").Required().StringVar(&c.backend)
 }
 
 func (c *Command) run(*kingpin.ParseContext) error {
-	s := &Server{port: c.port, clientPort: c.clientPort, books: make([]*bookv1.Book, 0)}
-	return s.Start()
+	switch c.backend {
+	case "inmemory":
+		s := &Server{port: c.port, clientPort: c.clientPort, bs: books.NewMemoryBookService([]*bookv1.Book{})}
+		return s.Start()
+	case "mongo":
+		client, disconnect, err := initClient(options.Client().ApplyURI("mongodb://localhost:27017"))
+		if err != nil {
+			return err
+		}
+		defer disconnect()
+
+		if err = pingMongo(client); err != nil {
+			return err
+		}
+		s := &Server{port: c.port, clientPort: c.clientPort, bs: books.NewMongoBookService(client.Database("grpc-lab"))}
+		return s.Start()
+	default:
+		return errors.New("please provide correct backend" + c.backend)
+	}
+
+}
+
+func initClient(opts ...*options.ClientOptions) (*mongo.Client, func(), error) {
+	var client *mongo.Client
+	var err error
+	if client, err = mongo.NewClient(opts...); err != nil {
+		return nil, nil, err
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	err = client.Connect(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
+	disconnect := func() {
+		log.Printf("Diconnecting client")
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		if err = client.Disconnect(ctx); err != nil {
+			panic(err)
+		}
+	}
+	return client, disconnect, nil
+}
+
+func pingMongo(client *mongo.Client) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	return client.Ping(ctx, readpref.Primary())
 }
