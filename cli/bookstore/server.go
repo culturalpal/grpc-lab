@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	bookv1 "github.com/ppal31/grpc-lab/generated/book/v1"
 	"github.com/ppal31/grpc-lab/internal/books"
 	"go.mongodb.org/mongo-driver/mongo"

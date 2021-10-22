@@ -5,17 +5,15 @@ managed:
     default: github.com/ppal31/grpc-lab/generated/api/
     except:
       - buf.build/googleapis/googleapis
+      - buf.build/gogo/protobuf
 plugins:
-  - name: go
+  - name: gogofast
     out: generated
     opt:
-      - paths=source_relative
-  - name: go-grpc
-    out: generated
-    opt:
+      - plugins=grpc
       - paths=source_relative
   - name: grpc-gateway
     out: generated
     opt:
       - paths=source_relative
-      - generate_unbound_methods=true
+      - logtostderr=true

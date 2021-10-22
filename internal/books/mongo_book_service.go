@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	bookv1 "github.com/ppal31/grpc-lab/generated/book/v1"
-	"github.com/ppal31/grpc-lab/internal/books/model"
 	"github.com/ppal31/grpc-lab/internal/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -35,7 +34,7 @@ func (m *MongoBookService) ListBooks(ctx context.Context, request *bookv1.ListBo
 }
 
 func (m *MongoBookService) CreateBook(ctx context.Context, request *bookv1.CreateBookRequest) (*bookv1.CreateBookResponse, error) {
-	book := &model.Book{
+	book := &bookv1.Book{
 		Id:     utils.GenerateUuid(),
 		Author: request.Author,
 		Title:  request.Title,
@@ -44,7 +43,7 @@ func (m *MongoBookService) CreateBook(ctx context.Context, request *bookv1.Creat
 	if err != nil {
 		return nil, err
 	}
-	return &bookv1.CreateBookResponse{Book: model.ToBook(book)}, nil
+	return &bookv1.CreateBookResponse{Book: book}, nil
 }
 
 func (m *MongoBookService) GetBook(ctx context.Context, request *bookv1.GetBookRequest) (*bookv1.GetBookResponse, error) {
@@ -53,11 +52,11 @@ func (m *MongoBookService) GetBook(ctx context.Context, request *bookv1.GetBookR
 		return nil, sr.Err()
 	}
 
-	book := &model.Book{}
+	book := &bookv1.Book{}
 	if err := sr.Decode(book); err != nil {
 		return nil, err
 	}
-	return &bookv1.GetBookResponse{Book: model.ToBook(book)}, nil
+	return &bookv1.GetBookResponse{Book: book}, nil
 }
 
 func (m *MongoBookService) DeleteBook(ctx context.Context, request *bookv1.DeleteBookRequest) (*bookv1.DeleteBookResponse, error) {
