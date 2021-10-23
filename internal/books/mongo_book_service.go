@@ -36,7 +36,7 @@ func (m *MongoBookService) ListBooks(ctx context.Context, request *bookv1.ListBo
 func (m *MongoBookService) CreateBook(ctx context.Context, request *bookv1.CreateBookRequest) (*bookv1.CreateBookResponse, error) {
 	book := &bookv1.Book{
 		Id:     utils.GenerateUuid(),
-		Author: request.Author,
+		Author: &bookv1.Author{Name: request.Author},
 		Title:  request.Title,
 	}
 	_, err := m.db.Collection(collectionName).InsertOne(ctx, book)

@@ -7,15 +7,12 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	bookv1 "github.com/ppal31/grpc-lab/generated/book/v1"
 	"github.com/ppal31/grpc-lab/internal/books"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
-	"go.mongodb.org/mongo-driver/mongo/readpref"
+	"github.com/ppal31/grpc-lab/internal/storage/mongo"
 	"google.golang.org/grpc"
 	"gopkg.in/alecthomas/kingpin.v2"
 	"log"
 	"net"
 	"net/http"
-	"time"
 )
 
 type Server struct {
@@ -87,48 +84,14 @@ func (c *Command) run(*kingpin.ParseContext) error {
 		s := &Server{port: c.port, clientPort: c.clientPort, bs: books.NewMemoryBookService([]*bookv1.Book{})}
 		return s.Start()
 	case "mongo":
-		client, disconnect, err := initClient(options.Client().ApplyURI("mongodb://localhost:27017"))
+		db, err := mongo.InitDb("mongodb://localhost:27017", "grpc-lab")
 		if err != nil {
 			return err
 		}
-		defer disconnect()
-
-		if err = pingMongo(client); err != nil {
-			return err
-		}
-		s := &Server{port: c.port, clientPort: c.clientPort, bs: books.NewMongoBookService(client.Database("grpc-lab"))}
+		s := &Server{port: c.port, clientPort: c.clientPort, bs: books.NewMongoBookService(db)}
 		return s.Start()
 	default:
 		return errors.New("please provide correct backend" + c.backend)
 	}
 
-}
-
-func initClient(opts ...*options.ClientOptions) (*mongo.Client, func(), error) {
-	var client *mongo.Client
-	var err error
-	if client, err = mongo.NewClient(opts...); err != nil {
-		return nil, nil, err
-	}
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	err = client.Connect(ctx)
-	if err != nil {
-		return nil, nil, err
-	}
-	disconnect := func() {
-		log.Printf("Diconnecting client")
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
-		if err = client.Disconnect(ctx); err != nil {
-			panic(err)
-		}
-	}
-	return client, disconnect, nil
-}
-
-func pingMongo(client *mongo.Client) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-	defer cancel()
-	return client.Ping(ctx, readpref.Primary())
 }

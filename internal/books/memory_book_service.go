@@ -27,7 +27,7 @@ func (mem *MemoryBookService) CreateBook(ctx context.Context, request *bookv1.Cr
 	defer mem.mu.Unlock()
 	book := &bookv1.Book{
 		Id:     utils.GenerateUuid(),
-		Author: request.Author,
+		Author: &bookv1.Author{Name: request.Author},
 		Title:  request.Title,
 	}
 	mem.books = append(mem.books, book)
