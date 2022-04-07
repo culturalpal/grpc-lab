@@ -26,6 +26,7 @@ Grpc Gateway tools
 The generated files are contained in the generated directory. To regenerate the proto definitions use the following command
 `buf generate`
 ## Experiments
+---
 
 ### Client Side Load Balancing experiment
 The repo contains a launcher script at the root ``start.sh``
@@ -48,7 +49,6 @@ It contain two tests
 - [ ] Add more examples using etcd/consul etc
 
 ---
-
 ### Http Transcoding using grpc gateway (Mongo go driver support as well)
 
 Implemented a book service which is a basic in memory CRUD application. 
@@ -68,5 +68,3 @@ Once running you it exposes following http endpoints
 - GET `/api/v1/books/{id}` - Get a book
 - DELETE `/api/v1/books/{id}"` - Delete a book
 - POST `/api/v1/books` - Create a book Payload - `'{"title":"Designing Data Intensive Applications", "author":"Michael Kleppman"}'`
-
-
