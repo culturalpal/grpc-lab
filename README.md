@@ -47,6 +47,8 @@ It contain two tests
 - [ ] Better error handling for zookeeper
 - [ ] Add more examples using etcd/consul etc
 
+---
+
 ### Http Transcoding using grpc gateway (Mongo go driver support as well)
 
 Implemented a book service which is a basic in memory CRUD application. 
