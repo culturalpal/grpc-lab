@@ -2,11 +2,11 @@
 
 This repository contains various experiment related to grpc in golang. The setup per experiment is described in the experiments section below 
 
-The `contracts` directory contain a submodule which points to the [grpc-lab-contracts](https://www.google.com) repo
+The `contracts` directory contain a submodule which points to the [grpc-lab-contracts](https://github.com/hextechpal/grpc-lab-contracts) repo
 
-The repo uses buf to generate the definitions. The contracts repo contains the buf modules. The generate and work files are contined in this repo
+The repo uses `buf` to generate the definitions. The contracts repo contains the `buf modules`. buf generate and work files are contained in this repo
 
-You need to have the following protobuf tools in your path before you generate go structs from proto definitions
+You need to have the following `protobuf` tools in your path before you generate go structs from proto definitions
 
 Protoc Gen for go
 
